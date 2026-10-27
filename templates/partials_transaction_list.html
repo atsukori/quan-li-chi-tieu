@@ -1,0 +1,19 @@
+{% if recent %}
+<div class="table-wrap recent-table-wrap">
+    <table class="data-table">
+        <thead><tr><th>Giao dịch</th><th>Ngày</th><th>Nguồn</th><th class="align-right">Số tiền</th></tr></thead>
+        <tbody>
+        {% for row in recent %}
+        <tr>
+            <td><div class="transaction-title-cell"><span class="transaction-sign {% if row['transaction_type'] == 'income' %}sign-income{% else %}sign-expense{% endif %}">{{ '+' if row['transaction_type'] == 'income' else '−' }}</span><span><strong>{{ row['purpose'] }}</strong><small>{{ row['full_name'] }}</small></span></div></td>
+            <td class="date-cell">{{ row['transaction_date']|date_vi }}</td>
+            <td><span class="source-pill {{ 'source-shared' if row['source'] == 'shared' else 'source-personal' }}">{{ 'Tiền chung' if row['source'] == 'shared' else 'Cá nhân' }}</span></td>
+            <td class="align-right amount-cell {{ 'amount-income' if row['transaction_type'] == 'income' else 'amount-expense' }}">{{ '+' if row['transaction_type'] == 'income' else '−' }}{{ row['amount']|vnd }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state"><span class="empty-symbol">▤</span><strong>Chưa có giao dịch nào</strong><p>Thêm khoản thu hoặc chi đầu tiên để bắt đầu theo dõi tài chính.</p><a href="{{ url_for('new_transaction') }}" class="text-link">Thêm giao dịch →</a></div>
+{% endif %}

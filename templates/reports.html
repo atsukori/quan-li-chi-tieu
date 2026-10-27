@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Báo cáo — Sổ Nhà{% endblock %}
+{% block content %}
+<section class="page-heading heading-with-action">
+    <div><div class="eyebrow">PHÂN TÍCH DÒNG TIỀN</div><h1>Báo cáo chi tiêu</h1><p class="muted">Xem nhanh tổng thu, tổng chi và các khoản chi nổi bật theo từng giai đoạn.</p></div>
+    <a class="button button-secondary" href="{{ url_for('export_excel', start=start, end=end) }}">⇩ Xuất kỳ báo cáo</a>
+</section>
+<section class="panel report-filter-panel">
+    <form method="get" class="report-filter-form">
+        <div class="field"><label for="period">Khoảng thời gian</label><select name="period" id="period"><option value="day" {% if period == 'day' %}selected{% endif %}>Theo ngày</option><option value="week" {% if period == 'week' %}selected{% endif %}>Theo tuần</option><option value="month" {% if period == 'month' %}selected{% endif %}>Theo tháng</option><option value="year" {% if period == 'year' %}selected{% endif %}>Theo năm</option><option value="custom" {% if period == 'custom' %}selected{% endif %}>Tùy chọn ngày</option></select></div>
+        <div class="field"><label for="reference_date">Ngày tham chiếu</label><input type="date" id="reference_date" name="reference_date" value="{{ reference_date }}"></div>
+        <div class="field"><label for="start">Từ ngày (tùy chọn)</label><input type="date" id="start" name="start" value="{{ start }}"></div>
+        <div class="field"><label for="end">Đến ngày (tùy chọn)</label><input type="date" id="end" name="end" value="{{ end }}"></div>
+        <div class="filter-submit"><button class="button button-primary" type="submit">Tạo báo cáo</button></div>
+    </form>
+    <p class="report-period-note">Đang xem dữ liệu từ <strong>{{ start|date_vi }}</strong> đến <strong>{{ end|date_vi }}</strong>.</p>
+</section>
+<section class="metric-grid metric-grid-three report-metrics">
+    <article class="metric-card"><div class="metric-top"><span>Tổng thu</span><span class="metric-icon icon-mint">↗</span></div><div class="metric-value metric-value-sm amount-income">{{ income|vnd }}</div><div class="metric-caption">Các khoản tiền vào trong kỳ</div></article>
+    <article class="metric-card"><div class="metric-top"><span>Tổng chi</span><span class="metric-icon icon-peach">↘</span></div><div class="metric-value metric-value-sm amount-expense">{{ expense|vnd }}</div><div class="metric-caption">Các khoản tiền ra trong kỳ</div></article>
+    <article class="metric-card"><div class="metric-top"><span>Chênh lệch thu – chi</span><span class="metric-icon icon-lilac">∑</span></div><div class="metric-value metric-value-sm {{ 'amount-income' if net >= 0 else 'amount-expense' }}">{{ net|vnd }}</div><div class="metric-caption">Tổng thu trừ tổng chi</div></article>
+</section>
+<div class="content-grid report-content-grid">
+    <section class="panel report-purpose-panel"><div class="section-heading"><div><h2>Các khoản chi nổi bật</h2><p class="muted">Phân nhóm theo nội dung giao dịch đã nhập</p></div></div>
+        {% if purpose_chart %}
+        <div class="purpose-chart-list">
+            {% for item in purpose_chart %}
+            <div class="purpose-chart-row"><div class="purpose-chart-label"><strong>{{ item.purpose }}</strong><span>{{ item.amount|vnd }}</span></div><div class="progress-track chart-track"><div class="progress-fill" style="width: {{ item.percent }}%"></div></div></div>
+            {% endfor %}
+        </div>
+        {% else %}<div class="empty-state compact-empty"><span class="empty-symbol">▤</span><strong>Chưa có khoản chi trong kỳ</strong><p>Thêm giao dịch chi tiêu để báo cáo hiển thị phân tích.</p></div>{% endif %}
+    </section>
+    <aside class="panel report-breakdown-panel"><div class="section-heading"><div><h2>Cơ cấu dòng tiền</h2><p class="muted">Tổng quan theo nguồn ghi nhận</p></div></div>
+        <div class="breakdown-item"><span class="breakdown-dot dot-income"></span><div><strong>Thu nhập</strong><small>Tiền vào trong kỳ</small></div><b>{{ income|vnd }}</b></div>
+        <div class="breakdown-item"><span class="breakdown-dot dot-expense"></span><div><strong>Chi tiêu</strong><small>Tiền ra trong kỳ</small></div><b>{{ expense|vnd }}</b></div>
+        <div class="breakdown-item breakdown-total"><span class="breakdown-dot dot-total"></span><div><strong>Số giao dịch</strong><small>Thu và chi đã ghi nhận</small></div><b>{{ rows|length }}</b></div>
+        <a class="button button-secondary button-full" href="{{ url_for('transactions', start=start, end=end) }}">Xem giao dịch trong kỳ <span>→</span></a>
+    </aside>
+</div>
+<section class="panel report-table-panel"><div class="section-heading"><div><h2>Chi tiết dữ liệu kỳ báo cáo</h2><p class="muted">{{ rows|length }} giao dịch</p></div></div>
+    {% if rows %}<div class="table-wrap"><table class="data-table"><thead><tr><th>Ngày</th><th>Mục đích</th><th>Thành viên</th><th>Loại</th><th>Nguồn</th><th class="align-right">Số tiền</th></tr></thead><tbody>
+    {% for row in rows %}<tr><td class="date-cell">{{ row['transaction_date']|date_vi }}</td><td><strong>{{ row['purpose'] }}</strong></td><td>{{ row['full_name'] }}</td><td>{{ 'Thu nhập' if row['transaction_type'] == 'income' else 'Chi tiêu' }}</td><td>{{ 'Tiền chung' if row['source'] == 'shared' else 'Tiền cá nhân' }}</td><td class="align-right amount-cell {{ 'amount-income' if row['transaction_type'] == 'income' else 'amount-expense' }}">{{ '+' if row['transaction_type'] == 'income' else '−' }}{{ row['amount']|vnd }}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}<div class="empty-state compact-empty"><strong>Chưa có dữ liệu trong khoảng thời gian này</strong><p>Chọn khoảng thời gian khác hoặc thêm giao dịch mới.</p></div>{% endif %}
+</section>
+{% endblock %}

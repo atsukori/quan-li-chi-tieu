@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Lỗi {{ code }} — Sổ Nhà{% endblock %}
+{% block content %}
+<section class="error-page"><div class="error-code">{{ code }}</div><div class="eyebrow">ĐÃ CÓ SỰ CỐ NHỎ</div><h1>Không thể hoàn tất yêu cầu</h1><p class="muted">{{ message }}</p><a class="button button-primary" href="{{ url_for('dashboard') if current_user else url_for('login') }}">Quay về trang chính →</a></section>
+{% endblock %}

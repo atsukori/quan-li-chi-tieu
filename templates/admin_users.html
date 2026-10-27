@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Quản lý thành viên — Sổ Nhà{% endblock %}
+{% block content %}
+<section class="page-heading"><div><div class="eyebrow">QUẢN TRỊ HỆ THỐNG</div><h1>Quản lý thành viên</h1><p class="muted">Tạo tài khoản, điều chỉnh hạn mức và khóa hoặc mở khóa quyền truy cập.</p></div></section>
+<div class="admin-user-layout">
+    <section class="panel create-member-panel"><div class="section-heading"><div><h2>Tạo tài khoản mới</h2><p class="muted">Tài khoản mới được cấp vai trò Thành viên.</p></div><span class="section-step">01</span></div>
+        <form method="post" class="stack-form">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <div class="field"><label for="full_name">Họ và tên</label><input type="text" name="full_name" id="full_name" maxlength="80" placeholder="Nguyễn Văn An" required></div>
+            <div class="field"><label for="username">Tên đăng nhập</label><input type="text" name="username" id="username" minlength="3" maxlength="32" pattern="[a-zA-Z0-9_.-]{3,32}" placeholder="nguyenan" required><small>3–32 ký tự: chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.</small></div>
+            <div class="field"><label for="password">Mật khẩu ban đầu</label><input type="password" name="password" id="password" minlength="6" autocomplete="new-password" placeholder="Ít nhất 6 ký tự" required></div>
+            <div class="field"><label for="monthly_limit">Hạn mức chi tiêu tháng (VNĐ)</label><input type="number" name="monthly_limit" id="monthly_limit" min="1" max="1000000000000" step="1" value="3000000" required></div>
+            <button type="submit" class="button button-primary button-full">＋ Tạo tài khoản</button>
+        </form>
+    </section>
+    <section class="panel member-list-panel"><div class="section-heading"><div><h2>Danh sách thành viên</h2><p class="muted">Hạn mức và chi tiêu của tháng hiện tại</p></div><span class="member-count">{{ members|length }} tài khoản</span></div>
+        {% if members %}
+        <div class="member-list">
+            {% for member in members %}
+            {% set spending = spending_by_user.get(member['id_user'], 0) %}
+            {% set percent = [100, (spending / member['monthly_limit'] * 100)|round|int]|min if member['monthly_limit'] else 0 %}
+            <article class="member-card">
+                <div class="member-card-heading"><div class="member-identity"><div class="avatar member-avatar">{{ (member['full_name'] or member['username'])[0]|upper }}</div><div><strong>{{ member['full_name'] }}</strong><small>@{{ member['username'] }}</small></div></div><span class="status-pill {{ 'status-locked' if member['is_locked'] else 'status-active' }}"><span></span>{{ 'Đã khóa' if member['is_locked'] else 'Đang hoạt động' }}</span></div>
+                <div class="member-spending-line"><span>Chi tiêu tháng này</span><strong>{{ spending|vnd }}</strong></div>
+                <div class="progress-track member-progress"><div class="progress-fill {% if percent >= 100 %}progress-danger{% elif percent >= 80 %}progress-warn{% endif %}" style="width: {{ percent }}%"></div></div>
+                <form class="member-limit-form" method="post" action="{{ url_for('update_user_limit', user_id=member['id_user']) }}">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token }}"><label for="limit-{{ member['id_user'] }}">Hạn mức tháng</label><div class="limit-edit-controls"><input id="limit-{{ member['id_user'] }}" type="number" name="monthly_limit" min="1" max="1000000000000" step="1" value="{{ '%.0f'|format(member['monthly_limit']) }}" required><button class="button button-small button-secondary" type="submit">Lưu hạn mức</button></div>
+                </form>
+                <div class="member-card-footer"><span class="member-created">Tạo ngày {{ member['created_at'][:10] }}</span><form method="post" action="{{ url_for('toggle_user_lock', user_id=member['id_user']) }}"><input type="hidden" name="_csrf" value="{{ csrf_token }}"><button type="submit" class="button button-small {{ 'button-primary' if member['is_locked'] else 'button-danger-soft' }}">{{ 'Mở khóa' if member['is_locked'] else 'Khóa tài khoản' }}</button></form></div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}<div class="empty-state"><span class="empty-symbol">♙</span><strong>Chưa có thành viên</strong><p>Tạo tài khoản đầu tiên bằng biểu mẫu bên trái.</p></div>{% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }} — Sổ Nhà{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div><div class="eyebrow">SỔ THU CHI</div><h1>{{ page_title }}</h1><p class="muted">Ghi lại thông tin đầy đủ để số dư và báo cáo được cập nhật chính xác.</p></div>
+</section>
+<div class="form-layout">
+    <section class="panel form-panel">
+        <form method="post" class="stack-form transaction-entry-form">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <div class="field"><label for="transaction_date">Ngày giao dịch <span class="required-star">*</span></label><input type="date" id="transaction_date" name="transaction_date" value="{{ transaction['transaction_date'] if transaction else today_iso }}" required></div>
+            <div class="field"><label for="transaction_type">Loại giao dịch <span class="required-star">*</span></label><select id="transaction_type" name="transaction_type" required><option value="expense" {% if not transaction or transaction['transaction_type'] == 'expense' %}selected{% endif %}>Chi tiêu</option><option value="income" {% if transaction and transaction['transaction_type'] == 'income' %}selected{% endif %}>Thu nhập</option></select><small>Khoản thu làm tăng số dư; khoản chi làm giảm số dư.</small></div>
+            <div class="field"><label for="amount">Số tiền (VNĐ) <span class="required-star">*</span></label><input type="number" id="amount" name="amount" min="1" max="1000000000000" step="1" inputmode="decimal" value="{{ transaction['amount'] if transaction else '' }}" placeholder="Ví dụ: 150000" required></div>
+            <div class="field"><label for="purpose">Mục đích <span class="required-star">*</span></label><input type="text" id="purpose" name="purpose" maxlength="180" value="{{ transaction['purpose'] if transaction else '' }}" placeholder="Ví dụ: Đi chợ, tiền điện, lương tháng..." required><small>Tối đa 180 ký tự.</small></div>
+            <div class="field"><label for="source">Nguồn tiền <span class="required-star">*</span></label><select id="source" name="source" required><option value="personal" {% if not transaction or transaction['source'] == 'personal' %}selected{% endif %}>Tiền cá nhân</option><option value="shared" {% if transaction and transaction['source'] == 'shared' %}selected{% endif %}>Tiền chung của gia đình</option></select><small>Giao dịch quỹ chung sẽ hiển thị với tất cả thành viên.</small></div>
+            <div class="form-actions"><a class="button button-secondary" href="{{ url_for('transactions') }}">Hủy</a><button type="submit" class="button button-primary">{{ 'Lưu thay đổi' if transaction else 'Lưu giao dịch' }} <span>→</span></button></div>
+        </form>
+    </section>
+    <aside class="form-aside">
+        <div class="note-card"><span class="note-icon">✳</span><h3>Một vài lưu ý</h3><ul><li>Chọn đúng nguồn tiền để phân biệt ví cá nhân và quỹ chung.</li><li>Ghi mục đích cụ thể để báo cáo theo khoản chi có ý nghĩa hơn.</li><li>Giao dịch đã lưu có thể được chỉnh sửa hoặc xóa.</li></ul></div>
+        <div class="note-card note-card-muted"><span class="note-icon">◎</span><h3>Hạn mức tháng</h3><p>Hệ thống cộng các khoản chi do tài khoản ghi nhận trong tháng để theo dõi hạn mức. Khoản chi quỹ chung vẫn được thống kê vào lịch sử chung của gia đình.</p></div>
+    </aside>
+</div>
+{% endblock %}

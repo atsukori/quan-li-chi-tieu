@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#153e35">
+    <title>{% block title %}Sổ Nhà — Quản lý chi tiêu{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if current_user %}
+    <header class="topbar">
+        <a class="brand" href="{{ url_for('dashboard') }}">
+            <span class="brand-mark">S</span>
+            <span class="brand-copy"><strong>Sổ Nhà</strong><small>QUẢN LÝ TÀI CHÍNH GIA ĐÌNH</small></span>
+        </a>
+        <nav class="main-nav" aria-label="Điều hướng chính">
+            <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Tổng quan</a>
+            <a href="{{ url_for('transactions') }}" class="{% if request.endpoint in ['transactions', 'new_transaction', 'edit_transaction'] %}active{% endif %}">Giao dịch</a>
+            <a href="{{ url_for('reports') }}" class="{% if request.endpoint == 'reports' %}active{% endif %}">Báo cáo</a>
+            {% if current_user['role_name'] == 'Admin' %}
+            <a href="{{ url_for('admin_users') }}" class="{% if request.endpoint in ['admin_users', 'update_user_limit', 'toggle_user_lock'] %}active{% endif %}">Thành viên</a>
+            {% endif %}
+        </nav>
+        <div class="topbar-account">
+            <div class="avatar">{{ (current_user['full_name'] or current_user['username'])[0]|upper }}</div>
+            <div class="account-copy"><strong>{{ current_user['full_name'] }}</strong><span>{{ 'Quản trị viên' if current_user['role_name'] == 'Admin' else 'Thành viên' }}</span></div>
+            <a class="account-link" href="{{ url_for('change_password') }}" title="Đổi mật khẩu">Mật khẩu</a>
+            <form method="post" action="{{ url_for('logout') }}" class="logout-form">
+                <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+                <button type="submit" class="logout-button">Đăng xuất</button>
+            </form>
+        </div>
+    </header>
+    {% endif %}
+
+    <main class="page-shell {% if not current_user %}page-shell-auth{% endif %}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <section class="flash-stack" aria-live="polite">
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}"><span class="flash-symbol">{% if category == 'success' %}✓{% elif category == 'warning' %}!{% else %}×{% endif %}</span><span>{{ message }}</span></div>
+                {% endfor %}
+            </section>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+        <footer class="site-footer">
+            <span>Sổ Nhà <span class="footer-dot">•</span> Quản lý thu chi có kế hoạch</span>
+            <span>Dữ liệu được lưu trên máy chủ cục bộ</span>
+        </footer>
+    </main>
+</body>
+</html>
